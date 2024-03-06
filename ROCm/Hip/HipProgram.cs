@@ -14,9 +14,6 @@ public class HipProgram(string kernelName, string src, string[] headerNames, str
     {
         get
         {
-            if (!IsCompiled)
-                return string.Empty;
-
             var size = Rtc.Log(kernelName, null, 0);
             var log = new StringBuilder(size);
             Rtc.Log(kernelName, log, size);

@@ -59,7 +59,7 @@ public static class Rtc
     [DllImport("shared_hip_runtime_compilation_shared_vs2022", EntryPoint = "get_log", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
     public static extern int Log(
         string kernelName,
-        StringBuilder log,
+        StringBuilder? log,
         int allocatedSize);
 
     [DllImport("shared_hip_runtime_compilation_shared_vs2022", EntryPoint = "get_size", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]

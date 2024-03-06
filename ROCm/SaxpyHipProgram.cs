@@ -74,7 +74,6 @@ public class SaxpyHipProgram() : HipProgram(KernelName, src, HeaderNames, Header
         set => Param("size", value);
     }
 
-
     public float[] Call(float a, float[] x, float[] y)
     {
         A = a;
