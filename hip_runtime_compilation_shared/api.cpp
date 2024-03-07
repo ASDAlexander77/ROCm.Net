@@ -27,13 +27,13 @@ public:
 struct HipCodeArgs
 {
 public:
-    HipCodeArgs() : paramNames{}, size{0}, args{} {};
+    HipCodeArgs() : params{}, size{0}, args{} {};
 
     template <typename T>
     int param(std::string param_name, T scalarValue, bool is_array = false, void* allocated = nullptr)
     {
-        auto it = paramNames.find(param_name);
-        if (it != std::end(paramNames))
+        auto it = params.find(param_name);
+        if (it != std::end(params))
         {
             // already added
             set<T>((*it).second.offset, scalarValue);
@@ -71,8 +71,8 @@ public:
         // size for Float array
         size_t size_bytes = size * sizeof(T);
 
-        auto it = paramNames.find(param_name);
-        if (it == std::end(paramNames))
+        auto it = params.find(param_name);
+        if (it == std::end(params))
         {
             return -1;
         }
@@ -100,7 +100,7 @@ public:
     int free()
     {
         // Free device memory.
-        for (auto& ptr : paramNames)
+        for (auto& ptr : params)
         {
             if (ptr.second.is_array)
                 HIP_CHECK(hipFree(ptr.second.allocated));
@@ -139,12 +139,12 @@ private:
 
         set(offset, value);
 
-        paramNames[name] = HipCodeParam(sizeof(value), delta, offset, allocated, is_array);
+        params[name] = HipCodeParam(sizeof(value), delta, offset, allocated, is_array);
 
         return offset;
     }
 
-    std::map<std::string, HipCodeParam> paramNames;
+    std::map<std::string, HipCodeParam> params;
     std::vector<char> args;
 };
 
