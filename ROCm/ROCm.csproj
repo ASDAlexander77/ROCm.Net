@@ -9,26 +9,20 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="amd_comgr0507.dll" />
-    <None Remove="hiprtc-builtins0507.dll" />
-    <None Remove="hiprtc0507.dll" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="$(HIP_PATH)\bin\hiprtc*.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(HIP_PATH)\bin\hiprtc-builtins*.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="$(HIP_PATH)\bin\amd_comgr*.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
   <ItemGroup>
-    <Content Include="amd_comgr0507.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="hiprtc-builtins0507.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="hiprtc0507.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="..\x64\Debug\shared_hip_runtime_compilation_shared_vs2022.dll" Link="shared_hip_runtime_compilation_shared_vs2022.dll">
+    <Content Include="..\x64\$(Configuration)\shared_hip_runtime_compilation_shared_vs2022.dll" Link="shared_hip_runtime_compilation_shared_vs2022.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -1,12 +1,11 @@
 #include "api.h"
 
-#include "example_utils.hpp"
+#include "utils.hpp"
 
 #include <hip/hip_runtime.h>
 #include <hip/hiprtc.h>
 
-#include <algorithm>
-#include <numeric>
+#include <string>
 #include <vector>
 #include <map>
 
@@ -19,10 +18,6 @@ public:
     int param(std::string param_name, T scalarValue)
     {
         auto deltaOffset = std::max(sizeof(scalarValue), sizeof(void*)); // aligning fix for CUDA executions
-
-    #if _DEBUG
-        std::cout << "Offset: " << offset << " delta: " << deltaOffset << std::endl;
-    #endif
 
         if (offset + deltaOffset > sizeof(args))
         {
@@ -50,10 +45,6 @@ public:
 
         float* d_arrayValue{};
         auto deltaOffset = sizeof(d_arrayValue);
-
-    #if _DEBUG
-        std::cout << "Offset: " << offset << " delta: " << deltaOffset << std::endl;
-    #endif
 
         if (offset + deltaOffset > sizeof(args))
         {
@@ -212,10 +203,6 @@ public:
         // Total number of float elements in each device vector.
         auto size = args.size;
         auto &argsRef = args.args;
-
-    #if _DEBUG
-        std::cout << "Offset: " << offset << " size: " << size << std::endl;
-    #endif
 
         // Now we launch the kernel on the device.
 

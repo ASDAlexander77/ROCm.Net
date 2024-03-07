@@ -25,16 +25,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="api.h" />
-    <ClInclude Include="example_utils.hpp" />
+    <ClInclude Include="utils.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(HIPExecutablePath)\hiprtc*.dll">
+    <Content Include="$(HIP_PATH)\bin\hiprtc*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(HIPExecutablePath)\hiprtc-builtins*.dll">
+    <Content Include="$(HIP_PATH)\bin\hiprtc-builtins*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(HIPExecutablePath)\amd_comgr*.dll">
+    <Content Include="$(HIP_PATH)\bin\amd_comgr*.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
