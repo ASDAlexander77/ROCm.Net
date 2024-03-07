@@ -9,24 +9,38 @@
 #include <vector>
 #include <map>
 
+struct HipCodeParam
+{
+    HipCodeParam() : size{0}, aligned_size{0}, offset{0}, allocated{nullptr}, is_array{false} {};
+
+    HipCodeParam(size_t size_, size_t aligned_size_, size_t offset_, void* allocated_, bool is_array_) : 
+        size{size_}, aligned_size{aligned_size_}, offset{offset_}, allocated{allocated_}, is_array{is_array_} {};
+
+public:
+    size_t size;
+    size_t aligned_size;
+    size_t offset;
+    void* allocated;
+    bool is_array;
+};
+
 struct HipCodeArgs
 {
 public:
-    HipCodeArgs() : paramNames{}, size{0}, args{}, allocated{} {};
+    HipCodeArgs() : paramNames{}, size{0}, args{} {};
 
     template <typename T>
-    int param(std::string param_name, T scalarValue)
+    int param(std::string param_name, T scalarValue, bool is_array = false, void* allocated = nullptr)
     {
         auto it = paramNames.find(param_name);
         if (it != std::end(paramNames))
         {
             // already added
-            set<T>(std::get<1>(*it), scalarValue);
+            set<T>((*it).second.offset, scalarValue);
         }
         else
         {
-            auto offset = append<T>(scalarValue);
-            paramNames[param_name] = offset;
+            append<T>(param_name, scalarValue, is_array, allocated);
         }
 
         return HIPRTC_SUCCESS;
@@ -46,12 +60,9 @@ public:
         T* d_arrayValue{};
 
         HIP_CHECK(hipMalloc(&d_arrayValue, size_bytes));
-
-        allocated.push_back((void*)d_arrayValue);
-
         HIP_CHECK(hipMemcpy(d_arrayValue, array_value, size_bytes, hipMemcpyHostToDevice));
 
-        return param(param_name, d_arrayValue);
+        return param(param_name, d_arrayValue, true, d_arrayValue);
     }
 
     template <typename T>
@@ -66,7 +77,7 @@ public:
             return -1;
         }
 
-        auto offset = std::get<1>(*it);
+        auto offset = (*it).second.offset;
 
         auto d_pointer = get<T*>(offset);
 
@@ -89,9 +100,10 @@ public:
     int free()
     {
         // Free device memory.
-        for (auto& ptr : allocated)
+        for (auto& ptr : paramNames)
         {
-            HIP_CHECK(hipFree((float*)ptr));
+            if (ptr.second.is_array)
+                HIP_CHECK(hipFree(ptr.second.allocated));
         }
 
         return HIPRTC_SUCCESS;
@@ -114,7 +126,7 @@ private:
     }
 
     template <typename T>
-    size_t append(T value)
+    size_t append(std::string name, T value, bool is_array, void* allocated)
     {
         auto offset = args.size();
         auto delta = std::max(sizeof(value), sizeof(void*)); // aligning fix for CUDA executions
@@ -126,11 +138,13 @@ private:
         }
 
         set(offset, value);
+
+        paramNames[name] = HipCodeParam(sizeof(value), delta, offset, allocated, is_array);
+
         return offset;
     }
 
-    std::map<std::string, size_t> paramNames;
-    std::vector<void*> allocated;
+    std::map<std::string, HipCodeParam> paramNames;
     std::vector<char> args;
 };
 
