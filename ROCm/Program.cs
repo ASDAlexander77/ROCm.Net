@@ -22,6 +22,19 @@ try
         }
 
         Console.WriteLine(string.Empty);
+
+        var result2 = hipProg.Call(
+            4.0f,
+            new float[] { 8, 7, 6, 5, 4, 3, 2, 1 },
+            new float[] { -8, -7, -6, -5, -4, -3, -2, -1 });
+
+        foreach (var value in result2)
+        {
+            Console.Write(value);
+            Console.Write(" ");
+        }
+
+        Console.WriteLine(string.Empty);
     }
     else
     {
