@@ -12,22 +12,22 @@
 struct HipCodeArgs
 {
 public:
-    HipCodeArgs() : paramNames{}, offset{0}, size{0}, args{0}, allocated{} {};
+    HipCodeArgs() : paramNames{}, size{0}, args{}, allocated{} {};
 
     template <typename T>
     int param(std::string param_name, T scalarValue)
     {
-        auto deltaOffset = std::max(sizeof(scalarValue), sizeof(void*)); // aligning fix for CUDA executions
-
-        if (offset + deltaOffset > sizeof(args))
+        auto it = paramNames.find(param_name);
+        if (it != std::end(paramNames))
         {
-            return -1;
+            // already added
+            set<T>(std::get<1>(*it), scalarValue);
         }
-
-        *(reinterpret_cast<T*>(&(args[offset]))) = scalarValue;
-        offset += deltaOffset;
-
-        paramNames.push_back(param_name);
+        else
+        {
+            auto offset = append<T>(scalarValue);
+            paramNames[param_name] = offset;
+        }
 
         return HIPRTC_SUCCESS;
     }
@@ -43,14 +43,7 @@ public:
 
         // array pointer
         size_t size_bytes = count * sizeof(T);
-
         T* d_arrayValue{};
-        auto deltaOffset = sizeof(d_arrayValue);
-
-        if (offset + deltaOffset > sizeof(args))
-        {
-            return -1;
-        }
 
         HIP_CHECK(hipMalloc(&d_arrayValue, size_bytes));
 
@@ -58,36 +51,39 @@ public:
 
         HIP_CHECK(hipMemcpy(d_arrayValue, array_value, size_bytes, hipMemcpyHostToDevice));
 
-        *(reinterpret_cast<const T**>(&(args[offset]))) = d_arrayValue;
-        offset += deltaOffset;
-
-        paramNames.push_back(param_name);
-
-        return HIPRTC_SUCCESS;
+        return param(param_name, d_arrayValue);
     }
 
     template <typename T>
     int result_array(std::string param_name, T* return_array, size_t count)
     {
-        auto args_as_ptrs = reinterpret_cast<void**>(&args);
-
         // size for Float array
         size_t size_bytes = size * sizeof(T);
 
-        auto it = std::find(paramNames.begin(), paramNames.end(), param_name);
+        auto it = paramNames.find(param_name);
         if (it == std::end(paramNames))
         {
             return -1;
         }
 
-        auto param_index = std::distance(paramNames.begin(), it);
+        auto offset = std::get<1>(*it);
 
-        auto d_pointer = args_as_ptrs[param_index];
+        auto d_pointer = get<T*>(offset);
 
         // Copy results from device to host.
         HIP_CHECK(hipMemcpy(return_array, d_pointer, size_bytes, hipMemcpyDeviceToHost));
 
         return HIPRTC_SUCCESS;
+    }
+
+    size_t get_args_size()
+    {
+        return args.size();
+    }
+
+    char* get_args_data()
+    {
+        return args.data();
     }
 
     int free()
@@ -101,13 +97,41 @@ public:
         return HIPRTC_SUCCESS;
     }
 
-    size_t offset;
     size_t size;
-    char args[256];
 
 private:
-    std::vector<std::string> paramNames;
+
+    template <typename T>
+    void set(size_t offset, T value)
+    {
+        *(reinterpret_cast<T*>(&(args.data()[offset]))) = value;
+    }
+
+    template <typename T>
+    T get(size_t offset)
+    {
+        return *(reinterpret_cast<T*>(&(args.data()[offset])));
+    }
+
+    template <typename T>
+    size_t append(T value)
+    {
+        auto offset = args.size();
+        auto delta = std::max(sizeof(value), sizeof(void*)); // aligning fix for CUDA executions
+        auto newSize = offset + delta;
+
+        if (newSize > args.size())
+        {
+            args.resize(newSize);
+        }
+
+        set(offset, value);
+        return offset;
+    }
+
+    std::map<std::string, size_t> paramNames;
     std::vector<void*> allocated;
+    std::vector<char> args;
 };
 
 class HipCode
@@ -160,7 +184,7 @@ public:
         // If the compilation generated a log, print it.
         if(log_size)
         {
-            log.reserve(log_size);
+            log.resize(log_size);
             hiprtcGetProgramLog(prog, &log[0]);
         }
 
@@ -175,7 +199,7 @@ public:
         hiprtcGetCodeSize(prog, &code_size);
 
         // Store compiled binary as a vector of characters.
-        code.reserve(code_size);
+        code.resize(code_size);
         hiprtcGetCode(prog, code.data());
 
         // Destroy program object.
@@ -184,9 +208,9 @@ public:
         return HIPRTC_SUCCESS;
     }
 
-    size_t get_log(char* log_out, size_t allocared_size)
+    size_t get_log(char* log_out, size_t allocated_size)
     {
-        if (log.size() <= allocared_size)
+        if (log.size() <= allocated_size)
         {
             std::copy(log.begin(), log.end(), log_out);
         }
@@ -201,10 +225,10 @@ public:
 
     int run(const char* function_name)
     {
-        auto offset = args.offset;
+        auto offset = args.get_args_size();
         // Total number of float elements in each device vector.
         auto size = args.size;
-        auto &argsRef = args.args;
+        auto args_data = args.get_args_data();
 
         // Now we launch the kernel on the device.
 
@@ -226,7 +250,7 @@ public:
 
         // Create array with kernel arguments and its size.
         void* config[] = {HIP_LAUNCH_PARAM_BUFFER_POINTER,
-                          argsRef,
+                          args_data,
                           HIP_LAUNCH_PARAM_BUFFER_SIZE,
                           &offset,
                           HIP_LAUNCH_PARAM_END};
