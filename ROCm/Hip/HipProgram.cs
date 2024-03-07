@@ -36,7 +36,7 @@ public class HipProgram(string kernelName, string src, string[] headerNames, str
 
     public float[] Out(string paramName, [Out] float[] result)
     {
-        Rtc.ResultFloatArray(kernelName, "d_y", result, result.Length);
+        Check(Rtc.ResultFloatArray(kernelName, paramName, result, result.Length));
         return result;
     }
 

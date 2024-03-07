@@ -67,7 +67,7 @@ public:
     }
 
     template <typename T>
-    int result_array(std::string param_name, T** return_array, size_t count)
+    int result_array(std::string param_name, T* return_array, size_t count)
     {
         auto args_as_ptrs = reinterpret_cast<void**>(&args);
 
@@ -309,7 +309,7 @@ int run(const char* kernel_name, const char* function_name)
     return codesByKernelName[kernel_name]->run(function_name);
 }
 
-int result_float_array(const char* kernel_name, const char* param_name, float** return_float_array, size_t count)
+int result_float_array(const char* kernel_name, const char* param_name, float* return_float_array, size_t count)
 {
     return codesByKernelName[kernel_name]->get_args().result_array(param_name, return_float_array, count);
 }
