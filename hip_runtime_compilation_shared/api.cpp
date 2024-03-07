@@ -35,8 +35,16 @@ public:
         auto it = params.find(param_name);
         if (it != std::end(params))
         {
+            auto &param = (*it).second;
+            if (param.is_array)
+            {
+                if (param.allocated != nullptr)
+                    HIP_CHECK(hipFree(param.allocated));
+                param.allocated = allocated;
+            }
+
             // already added
-            set<T>((*it).second.offset, scalarValue);
+            set<T>(param.offset, scalarValue);
         }
         else
         {

@@ -98,6 +98,6 @@ public static class Rtc
         int count);
 
     [DllImport("shared_hip_runtime_compilation_shared_vs2022", EntryPoint = "clear_run", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    public static extern Result CleanRun(
+    public static extern Result Clear(
         string kernelName);
 }

@@ -25,7 +25,7 @@ public class HipProgram(string kernelName, string src, string[] headerNames, str
     {
         if (isDisposed) return;
         isDisposed = true;
-        Rtc.CleanRun(kernelName);
+        Rtc.Clear(kernelName);
     }
 
     public void Compile()
