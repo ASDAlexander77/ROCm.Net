@@ -24,7 +24,7 @@ extern "C" HIPLIBRARY_API int param_float_array(const char*, const char*, const 
 
 extern "C" HIPLIBRARY_API int run(const char*, const char*);
 
-extern "C" HIPLIBRARY_API int result_float_array(const char*, const char*, char**, size_t);
+extern "C" HIPLIBRARY_API int result_float_array(const char*, const char*, float**, size_t);
 
 extern "C" HIPLIBRARY_API int clear_run(const char*);
 

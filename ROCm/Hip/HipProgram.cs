@@ -57,7 +57,7 @@ public class HipProgram(string kernelName, string src, string[] headerNames, str
 
     public void Run(string functionName)
     {
-        Rtc.Run(kernelName, functionName);
+        Check(Rtc.Run(kernelName, functionName));
     }
 
     private void Check(Result checkState)

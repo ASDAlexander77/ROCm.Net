@@ -32,7 +32,8 @@ public:
         return HIPRTC_SUCCESS;
     }
 
-    int param_float_array(const char* param_name, const float* array_value, size_t count)
+    template <typename T>
+    int param_array(const char* param_name, const T* array_value, size_t count)
     {
         // size
         if (count > size)
@@ -41,9 +42,9 @@ public:
         }
 
         // array pointer
-        size_t size_bytes = count * sizeof(float);
+        size_t size_bytes = count * sizeof(T);
 
-        float* d_arrayValue{};
+        T* d_arrayValue{};
         auto deltaOffset = sizeof(d_arrayValue);
 
         if (offset + deltaOffset > sizeof(args))
@@ -57,7 +58,7 @@ public:
 
         HIP_CHECK(hipMemcpy(d_arrayValue, array_value, size_bytes, hipMemcpyHostToDevice));
 
-        *(reinterpret_cast<const float**>(&(args[offset]))) = d_arrayValue;
+        *(reinterpret_cast<const T**>(&(args[offset]))) = d_arrayValue;
         offset += deltaOffset;
 
         paramNames.push_back(param_name);
@@ -65,12 +66,13 @@ public:
         return HIPRTC_SUCCESS;
     }
 
-    int result_float_array(std::string param_name, char** return_float_array, size_t count)
+    template <typename T>
+    int result_array(std::string param_name, T** return_array, size_t count)
     {
         auto args_as_ptrs = reinterpret_cast<void**>(&args);
 
         // size for Float array
-        size_t size_bytes = size * sizeof(float);
+        size_t size_bytes = size * sizeof(T);
 
         auto it = std::find(paramNames.begin(), paramNames.end(), param_name);
         if (it == std::end(paramNames))
@@ -83,7 +85,7 @@ public:
         auto d_pointer = args_as_ptrs[param_index];
 
         // Copy results from device to host.
-        HIP_CHECK(hipMemcpy(return_float_array, d_pointer, size_bytes, hipMemcpyDeviceToHost));
+        HIP_CHECK(hipMemcpy(return_array, d_pointer, size_bytes, hipMemcpyDeviceToHost));
 
         return HIPRTC_SUCCESS;
     }
@@ -299,7 +301,7 @@ int param_float(const char* kernel_name, const char* param_name, float scalarVal
 
 int param_float_array(const char* kernel_name, const char* param_name, const float* array_value, size_t count)
 {
-    return codesByKernelName[kernel_name]->get_args().param_float_array(param_name, array_value, count);
+    return codesByKernelName[kernel_name]->get_args().param_array(param_name, array_value, count);
 }
 
 int run(const char* kernel_name, const char* function_name)
@@ -307,9 +309,9 @@ int run(const char* kernel_name, const char* function_name)
     return codesByKernelName[kernel_name]->run(function_name);
 }
 
-int result_float_array(const char* kernel_name, const char* param_name, char** return_float_array, size_t count)
+int result_float_array(const char* kernel_name, const char* param_name, float** return_float_array, size_t count)
 {
-    return codesByKernelName[kernel_name]->get_args().result_float_array(param_name, return_float_array, count);
+    return codesByKernelName[kernel_name]->get_args().result_array(param_name, return_float_array, count);
 }
 
 int clear_run(const char* kernel_name)
